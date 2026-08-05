@@ -1,0 +1,34 @@
+plugins:
+  - rubocop-rake
+  - rubocop-minitest
+
+AllCops:
+  NewCops: enable
+  TargetRubyVersion: 3.2
+  Exclude:
+    - vendor/**/*
+    - gemfiles/**/*
+    - lib/ask-observability.rb
+
+Naming/FileName:
+  Exclude:
+    - lib/ask-observability.rb
+  SuggestExtensions: false
+
+Metrics/ClassLength:
+  Max: 550
+Metrics/AbcSize:
+  Max: 80
+Metrics/CyclomaticComplexity:
+  Max: 25
+Metrics/MethodLength:
+  Max: 80
+  CountAsOne:
+    - array
+    - hash
+    - heredoc
+Metrics/ModuleLength:
+  Max: 550
+
+Minitest/MultipleAssertions:
+  Enabled: false

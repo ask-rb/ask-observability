@@ -1,0 +1,29 @@
+# ask-observability configuration.
+#
+# The railtie bootstraps OpenTelemetry (spans → OTLP collector), installs
+# JSON structured logging, mounts /metrics, and subscribes to
+# ask-instrumentation events to maintain ask_llm_* Prometheus metrics.
+# Set the knobs below BEFORE boot completes so metrics get their final
+# label set.
+
+Ask::Observability.configure do |config|
+  # Master switch (useful in tests/CI).
+  # config.enabled = true
+
+  # service.name for spans and logs; defaults to the Rails app name.
+  # config.service_name = "my-app"
+
+  # OTLP/HTTP endpoint for spans (default: local OTel collector).
+  # config.otlp_endpoint = "http://localhost:4318/v1/traces"
+
+  # JSON logs on stdout via rails_semantic_logger.
+  # config.json_logging = true
+
+  # Where the /metrics endpoint is mounted (nil disables the mount).
+  # config.metrics_path = "/metrics"
+
+  # Metadata keys (from Ask::Instrumentation.with_metadata) to expose as
+  # metric labels. ONLY low-cardinality keys — every distinct value creates
+  # a new series. Never put request/call ids here.
+  # config.label_metadata = [:workspace_id]
+end
