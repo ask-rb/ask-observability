@@ -99,8 +99,8 @@ module Ask
       # @return [Object] the block's return value
       def with_context(metadata, &block)
         Ask::Instrumentation.with_metadata(metadata) do
-          if defined?(Rails) && Rails.respond_to?(:logger) && Rails.logger.respond_to?(:tagged)
-            Rails.logger.tagged(**metadata, &block)
+          if defined?(::Rails) && ::Rails.respond_to?(:logger) && ::Rails.logger.respond_to?(:tagged)
+            ::Rails.logger.tagged(**metadata, &block)
           else
             yield
           end

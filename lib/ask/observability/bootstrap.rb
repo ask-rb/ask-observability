@@ -31,7 +31,9 @@ module Ask
       def install_otel
         return if @otel_installed
         return if ENV['OTEL_DISABLED'] == 'true'
-        return if defined?(Rails) && Rails.respond_to?(:env) && Rails.env.test?
+        # ::Rails — inside Ask::*, the bare constant resolves to the sibling
+        # Ask::Rails module when ask-rails is loaded.
+        return if defined?(::Rails) && ::Rails.respond_to?(:env) && ::Rails.env.test?
 
         require 'opentelemetry-sdk'
         require 'opentelemetry-exporter-otlp'
@@ -57,9 +59,9 @@ module Ask
       # and the host app hasn't declared its own appenders.
       def install_json_logging
         return unless Ask::Observability.config.json_logging
-        return unless defined?(Rails) && Rails.respond_to?(:application)
+        return unless defined?(::Rails) && ::Rails.respond_to?(:application)
 
-        app = Rails.application
+        app = ::Rails.application
         options = app.config.rails_semantic_logger
         return unless options
         return if options.respond_to?(:appenders?) && options.appenders?
@@ -73,8 +75,8 @@ module Ask
       # else a generic fallback.
       def service_name
         Ask::Observability.config.service_name || begin
-          if defined?(Rails) && Rails.respond_to?(:application) && Rails.application
-            Rails.application.class.module_parent_name.to_s.underscore
+          if defined?(::Rails) && ::Rails.respond_to?(:application) && ::Rails.application
+            ::Rails.application.class.module_parent_name.to_s.underscore
           else
             'ask-app'
           end

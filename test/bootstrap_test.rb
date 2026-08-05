@@ -15,6 +15,9 @@ class BootstrapTest < Minitest::Test
     Ask::Observability.instance_variable_set(:@config, @previous_config)
     Ask::Observability::Bootstrap.instance_variable_set(:@otel_installed, false)
     remove_fake_rails
+    return unless @_ask_rails_shadow && Ask.const_defined?(:Rails)
+
+    Ask.send(:remove_const, :Rails)
   end
 
   def remove_fake_rails
@@ -66,6 +69,26 @@ class BootstrapTest < Minitest::Test
     end
 
     refute called
+  end
+
+  def test_install_otel_skips_in_test_environment_with_ask_rails_shadowing
+    # ask-rails defines Ask::Rails; inside Ask::* the bare constant would
+    # resolve to it. The guards must use ::Rails regardless.
+    shadow = Module.new
+    Ask.const_set(:Rails, shadow)
+    @_ask_rails_shadow = true
+    @_fake_rails = Module.new
+    env = Object.new
+    env.define_singleton_method(:test?) { true }
+    @_fake_rails.define_singleton_method(:env) { env }
+    Object.const_set(:Rails, @_fake_rails)
+
+    called = false
+    OpenTelemetry::SDK.stub(:configure, ->(&_) { called = true }) do
+      Ask::Observability::Bootstrap.install_otel
+    end
+
+    refute called, 'Ask::Rails must not shadow ::Rails in the guards'
   end
 
   def test_install_otel_is_idempotent
@@ -149,6 +172,24 @@ class BootstrapTest < Minitest::Test
   def test_install_json_logging_skips_without_rails
     # No Rails constant: must no-op without raising.
     assert_nil Ask::Observability::Bootstrap.install_json_logging
+  end
+
+  def test_install_json_logging_uses_real_rails_with_ask_rails_shadowing
+    # Ask::Rails (ask-rails) must not shadow ::Rails in the guard.
+    shadow = Module.new
+    Ask.const_set(:Rails, shadow)
+    @_ask_rails_shadow = true
+    fake_rails = fake_rails_with_logging_config(configured: false)
+    captured = nil
+
+    app = fake_rails.application
+    app.config.rails_semantic_logger.define_singleton_method(:appenders) do |&block|
+      captured = block
+    end
+
+    Ask::Observability::Bootstrap.install_json_logging
+
+    assert captured, 'expected appenders DSL block to be registered despite Ask::Rails'
   end
 
   private
