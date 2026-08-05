@@ -23,7 +23,8 @@ module Ask
         next if path.nil? || Ask::Observability.config.enabled == false
 
         app.routes.append do
-          mount Ask::Observability::MetricsApp, at: path
+          # MetricsApp is a Rack app (instance #call), so mount an instance.
+          mount Ask::Observability::MetricsApp.new, at: path
         end
       end
     end

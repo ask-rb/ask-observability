@@ -36,14 +36,16 @@ module Ask
         require 'opentelemetry-sdk'
         require 'opentelemetry-exporter-otlp'
 
-        OpenTelemetry::SDK.configure do |config|
+        # Absolute ::OpenTelemetry: from inside Ask::*, the bare constant
+        # would resolve to Ask::OpenTelemetry (the sibling gem) first.
+        ::OpenTelemetry::SDK.configure do |config|
           config.service_name = service_name
           config.add_span_processor(
-            OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
-              OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: Ask::Observability.config.otlp_endpoint)
+            ::OpenTelemetry::SDK::Trace::Export::BatchSpanProcessor.new(
+              ::OpenTelemetry::Exporter::OTLP::Exporter.new(endpoint: Ask::Observability.config.otlp_endpoint)
             )
           )
-          config.use_all if defined?(OpenTelemetry::Instrumentation::Rack)
+          config.use_all if defined?(::OpenTelemetry::Instrumentation::Rack)
         end
         @otel_installed = true
       rescue LoadError, StandardError => e

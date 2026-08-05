@@ -6,6 +6,11 @@ require 'prometheus/client/formats/text'
 
 require_relative 'observability/version'
 
+# Rails discovers gem railties only when they are required, so load the
+# railtie from the entry file once Rails itself is on the stack (the
+# documented pattern: "require my_gem/railtie if defined?(Rails::Railtie)").
+require_relative 'observability/railtie' if defined?(Rails::Railtie)
+
 module Ask
   # Ask::Observability — Prometheus metrics, OpenTelemetry bootstrap, and
   # structured logging for the ask-rb ecosystem.
