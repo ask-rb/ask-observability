@@ -7,7 +7,9 @@ class RailtieTest < Minitest::Test
     # Stub Rails for railtie loading (mirrors ask-opentelemetry's test).
     unless defined?(::Rails)
       railtie = Class.new do
-        def self.initializer(name) end
+        def self.initializer(name, options = {})
+          (@initializers ||= []) << [name, options]
+        end
       end
       @_rails_stub = Module.new
       @_rails_stub.const_set(:Railtie, railtie)
@@ -38,6 +40,17 @@ class RailtieTest < Minitest::Test
 
     assert_includes content, 'Ask::Observability::Bootstrap.install'
     assert_includes content, 'Ask::Observability.install'
+  end
+
+  def test_json_logging_initializer_runs_before_logger_init
+    railtie_path = File.expand_path('../lib/ask/observability/railtie.rb', __dir__)
+    content = File.read(railtie_path)
+
+    # Must be declared before rails_semantic_logger's :initialize_logger
+    # (group :all) consumes the appenders config — verified end-to-end in
+    # the host app (myrrlabs), whose web log must be JSON.
+    assert_includes content, "'ask.observability.logging'"
+    assert_includes content, 'group: :all, before: :initialize_logger'
   end
 
   def test_railtie_mounts_metrics_at_configured_path

@@ -11,6 +11,16 @@ module Ask
     # Everything honors Configuration#enabled; a host app that wants none
     # of it sets `enabled = false` in an initializer.
     class Railtie < ::Rails::Railtie
+      # JSON logging must be declared before rails_semantic_logger builds
+      # the logger: its +:initialize_logger+ initializer (which replaces
+      # Rails') runs in group :all and consumes the appenders config there
+      # — anything added later lands on the default colored appender.
+      initializer 'ask.observability.logging', group: :all, before: :initialize_logger do |_app|
+        next if Ask::Observability.config.enabled == false
+
+        Ask::Observability::Bootstrap.install_json_logging
+      end
+
       initializer 'ask.observability' do |_app|
         next if Ask::Observability.config.enabled == false
 
