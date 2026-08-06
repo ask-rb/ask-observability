@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.1] - 2026-08-06
+
+### Added
+
+- `Ask::Observability.counter` / `Ask::Observability.histogram` — reload-safe
+  register-or-resolve accessors on the shared registry. App files that
+  register metrics are re-evaluated by Zeitwerk during development reloads,
+  which re-registered the same names against a registry that still held them
+  and raised `AlreadyRegisteredError` (surfacing as a 500 in the host app);
+  the accessors resolve the existing metric instead.
+
 ## [0.1.0] - 2026-08-06
 
 ### Added

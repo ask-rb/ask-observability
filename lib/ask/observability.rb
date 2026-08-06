@@ -65,6 +65,30 @@ module Ask
 
       attr_writer :registry
 
+      # Register-or-resolve a counter on the shared registry. Reload-safe:
+      # in development, Zeitwerk re-evaluates app files that register
+      # metrics, which would re-register the same name against a registry
+      # that still holds it and raise AlreadyRegisteredError (surfacing as
+      # a 500 in the app). Resolving the existing metric keeps registrations
+      # idempotent instead.
+      #
+      # @param name [Symbol] metric name, e.g. :voice_turns_total
+      # @return [Prometheus::Client::Counter]
+      def counter(name, **kwargs)
+        registry.get(name) || registry.counter(name, **kwargs)
+      rescue Prometheus::Client::Registry::AlreadyRegisteredError
+        registry.get(name)
+      end
+
+      # Register-or-resolve a histogram (see #counter).
+      #
+      # @return [Prometheus::Client::Histogram]
+      def histogram(name, **kwargs)
+        registry.get(name) || registry.histogram(name, **kwargs)
+      rescue Prometheus::Client::Registry::AlreadyRegisteredError
+        registry.get(name)
+      end
+
       # Subscribe to every ask-instrumentation event and start maintaining
       # Prometheus metrics. Idempotent — subsequent calls are no-ops.
       def install
