@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.1.2] - 2026-08-06
+
+### Fixed
+
+- **Token metrics read from the nested `usage` payload hash.** ask-agent now
+  enriches `chat.ask` events with a shared nested `usage` hash (tokens/cost
+  are only known after the LLM call returns, and the instrumenter
+  shallow-copies the top-level payload). The subscriber reads
+  `payload[:usage]` first and falls back to top-level
+  `input_tokens`/`output_tokens` for other emitters, so
+  `ask_llm_tokens_total` counts correctly again.
+
 ## [0.1.1] - 2026-08-06
 
 ### Added

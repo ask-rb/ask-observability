@@ -51,8 +51,12 @@ module Ask
       end
 
       def record_tokens(metrics, labels, payload)
-        input = payload[:input_tokens].to_i
-        output = payload[:output_tokens].to_i
+        # Chat events emitted by ask-agent enrich a shared nested +usage+
+        # hash after the call returns (tokens/cost are only known then);
+        # other emitters pass input/output tokens at the top level.
+        usage = payload[:usage] || payload
+        input = usage[:input_tokens].to_i
+        output = usage[:output_tokens].to_i
         return if input.zero? && output.zero?
 
         metrics.tokens_total.increment(by: input, labels: labels.merge(direction: 'input')) if input.positive?

@@ -97,6 +97,16 @@ class SubscriberTest < Minitest::Test
     assert_nil registry.get(:ask_llm_tokens_total)
   end
 
+  def test_tokens_read_from_nested_usage_hash
+    # ask-agent enriches a shared nested +usage+ hash after the call returns
+    # (tokens are only known then); the subscriber must read from it.
+    instrument('chat.ask', provider: 'openai', model: 'gpt-4',
+               usage: { input_tokens: 100, output_tokens: 50 })
+
+    assert_equal 100, tokens(provider: 'openai', model: 'gpt-4', kind: 'chat', direction: 'input')
+    assert_equal 50, tokens(provider: 'openai', model: 'gpt-4', kind: 'chat', direction: 'output')
+  end
+
   # --- duration ----------------------------------------------------------
 
   def test_duration_histogram_observes_seconds
